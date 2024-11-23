@@ -1,30 +1,33 @@
-import { LucideIcon } from "lucide-react";
-import { cn } from "../../lib/utils";
+import { type LucideIcon } from "lucide-react";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "../ui/sidebar";
 
-interface NavItem {
-  title: string;
-  url: string;
-  icon?: LucideIcon;
+interface NavSecondaryProps extends React.HTMLAttributes<HTMLDivElement> {
+  items: {
+    title: string;
+    url: string;
+    icon: LucideIcon;
+  }[];
 }
 
-interface NavSecondaryProps {
-  items: NavItem[];
-  className?: string;
-}
-
-export function NavSecondary({ items, className }: NavSecondaryProps) {
+export function NavSecondary({ items, className, ...props }: NavSecondaryProps) {
   return (
-    <nav className={cn("grid gap-1", className)}>
-      {items.map((item, index) => (
-        <a
-          key={index}
-          href={item.url}
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-        >
-          {item.icon && <item.icon className="h-4 w-4" />}
-          <span>{item.title}</span>
-        </a>
-      ))}
-    </nav>
+    <div className="mt-auto pt-4 border-t border-[#2A2A2A]" {...props}>
+      <SidebarMenu>
+        {items.map((item) => (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton asChild>
+              <a href={item.url} className="flex-1">
+                <item.icon className="size-4 text-[#666666]" />
+                <span className="text-[#666666]">{item.title}</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
+    </div>
   );
 }

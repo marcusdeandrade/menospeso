@@ -11,7 +11,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarGroup,
-  SidebarGroupLabel,
 } from "../ui/sidebar";
 import {
   Dialog,
@@ -112,12 +111,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="#">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-[#2563EB] text-white">
                   <Command className="size-4" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">WhatsApp Cloud</span>
-                  <span className="truncate text-xs">Dashboard</span>
+                <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
+                  <span className="truncate font-semibold text-white">WhatsApp Cloud</span>
+                  <span className="truncate text-xs text-[#666666]">Dashboard</span>
                 </div>
               </a>
             </SidebarMenuButton>
@@ -130,15 +129,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem>
               <Dialog>
                 <DialogTrigger asChild>
-                  <SidebarMenuButton size="lg" className="border border-border/50 rounded-lg hover:border-border">
-                    <QrCode className="h-4 w-4" />
+                  <SidebarMenuButton 
+                    size="lg" 
+                    className={cn(
+                      "border border-[#2A2A2A] rounded-lg",
+                      "hover:border-[#404040]",
+                      "bg-[#1C1C1C]"
+                    )}
+                  >
+                    <QrCode className="size-4" />
                     <span className="flex-1 text-left">WhatsApp QR</span>
                     <div 
                       className={cn(
                         "px-2 py-0.5 rounded-full text-xs font-medium",
                         isConnected 
-                          ? "bg-green-500/10 text-green-500"
-                          : "bg-red-500/10 text-red-500"
+                          ? "bg-green-500/10 text-green-400"
+                          : "bg-red-500/10 text-red-400"
                       )}
                     >
                       {isConnected ? "Online" : "Offline"}
@@ -154,10 +160,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </Dialog>
             </SidebarMenuItem>
           </SidebarMenu>
-          <Separator className="my-4" />
-          <NavMain items={navData.navMain} />
+          <Separator className="my-4 bg-[#2A2A2A]" />
+          <div className="flex-1 flex flex-col min-h-0">
+            <NavMain items={navData.navMain} />
+            <NavSecondary items={navData.navSecondary} />
+          </div>
         </SidebarGroup>
-        <NavSecondary items={navData.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={navData.user} />

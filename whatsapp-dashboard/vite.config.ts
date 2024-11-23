@@ -11,5 +11,7 @@ export default defineConfig({
   },
   server: {
     port: 5183,
+    host: true, // Add this to expose to network
+    open: true, // Add this to open browser automatically
   },
 });

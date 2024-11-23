@@ -1,47 +1,40 @@
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Button } from "../ui/button";
+import { ChevronRight } from "lucide-react";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-
-interface User {
-  name: string;
-  email: string;
-  avatar: string;
-}
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "../ui/sidebar";
 
 interface NavUserProps {
-  user: User;
+  user: {
+    name: string;
+    email: string;
+    avatar?: string;
+  };
 }
 
 export function NavUser({ user }: NavUserProps) {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-auto w-full justify-start gap-3 px-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback>{user.name[0]}</AvatarFallback>
-          </Avatar>
-          <div className="grid flex-1 text-left text-sm">
-            <span className="font-medium">{user.name}</span>
-            <span className="text-xs text-muted-foreground">{user.email}</span>
-          </div>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>Perfil</DropdownMenuItem>
-        <DropdownMenuItem>Configurações</DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>Sair</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <button className="w-full">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#2A2A2A] bg-[#1C1C1C]">
+              <span className="text-sm font-medium text-[#666666]">
+                {user.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <div className="text-sm font-medium truncate text-[#A1A1A1]">{user.name}</div>
+              <div className="text-xs truncate text-[#666666]">{user.email}</div>
+            </div>
+            <SidebarMenuAction className="ml-2">
+              <ChevronRight className="size-4" />
+            </SidebarMenuAction>
+          </button>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
 }
