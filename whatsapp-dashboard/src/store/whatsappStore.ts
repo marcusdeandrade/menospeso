@@ -1,25 +1,21 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-type Status = 'connected' | 'disconnected' | 'connecting'
+type ConnectionStatus = 'connected' | 'disconnected';
 
 interface WhatsAppState {
-  status: Status
-  qrCode: string | null
-  connect: () => void
-  disconnect: () => void
+  status: ConnectionStatus;
+  setStatus: (status: ConnectionStatus) => void;
 }
 
-export const useWhatsAppStore = create<WhatsAppState>((set) => ({
-  status: 'disconnected',
-  qrCode: null,
-  connect: () => {
-    set({ status: 'connecting', qrCode: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==' })
-    // Simular conexão após 3 segundos
-    setTimeout(() => {
-      set({ status: 'connected', qrCode: null })
-    }, 3000)
-  },
-  disconnect: () => {
-    set({ status: 'disconnected', qrCode: null })
-  }
-}))
+export const useWhatsAppStore = create<WhatsAppState>()(
+  persist(
+    (set) => ({
+      status: 'disconnected',
+      setStatus: (status) => set({ status }),
+    }),
+    {
+      name: 'whatsapp-storage',
+    }
+  )
+);

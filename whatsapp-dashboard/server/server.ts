@@ -1,97 +1,100 @@
-import { Client } from 'whatsapp-web.js';
-import { Server } from 'socket.io';
 import express from 'express';
-import http from 'http';
+import { Server } from 'socket.io';
+import { createServer } from 'http';
+import { Client, LocalAuth } from 'whatsapp-web.js';
 import cors from 'cors';
 
 const app = express();
-app.use(cors());
-const server = http.createServer(app);
-
+const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"]
   }
 });
 
-// Initialize WhatsApp client
+app.use(cors());
+app.use(express.json());
+
+// WhatsApp client instance
 const client = new Client({
-  authStrategy: new (require('whatsapp-web.js')).LocalAuth(),
+  authStrategy: new LocalAuth(),
   puppeteer: {
-    headless: true,
-    executablePath: '/usr/bin/google-chrome-stable',
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process',
-      '--disable-gpu'
-    ]
+    args: ['--no-sandbox']
   }
 });
 
-// Socket.IO connection handling
+// Connection handling
 io.on('connection', (socket) => {
-  console.log('Frontend connected');
+  console.log('Client connected');
 
-  // Send current client state
-  socket.emit('status', client.info ? 'CONNECTED' : 'DISCONNECTED');
+  // Send current connection state
+  socket.emit('connection-state', client.info ? 'connected' : 'disconnected');
 
-  // Handle reconnect requests
-  socket.on('reconnect', () => {
-    console.log('Reconnecting WhatsApp...');
-    client.initialize();
+  // Handle QR code events
+  client.on('qr', (qr) => {
+    console.log('QR Code received');
+    socket.emit('qr', qr);
+  });
+
+  // Handle ready event
+  client.on('ready', () => {
+    console.log('WhatsApp client is ready');
+    socket.emit('ready');
+    socket.emit('connection-state', 'connected');
+  });
+
+  // Handle authenticated event
+  client.on('authenticated', () => {
+    console.log('WhatsApp client authenticated');
+    socket.emit('authenticated');
+    socket.emit('connection-state', 'connected');
+  });
+
+  // Handle disconnected event
+  client.on('disconnected', () => {
+    console.log('WhatsApp client disconnected');
+    socket.emit('connection-state', 'disconnected');
+  });
+
+  // Handle message events
+  client.on('message', async (msg) => {
+    socket.emit('message', {
+      from: msg.from,
+      body: msg.body,
+      timestamp: msg.timestamp
+    });
+  });
+
+  // Handle client disconnect
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
   });
 });
 
-// WhatsApp client event handlers
-client.on('qr', (qr) => {
-  console.log('QR Code received');
-  io.emit('qr', qr);
-  io.emit('status', 'CONNECTING');
-});
-
-client.on('ready', () => {
-  console.log('WhatsApp client is ready!');
-  io.emit('status', 'CONNECTED');
-});
-
-client.on('authenticated', () => {
-  console.log('WhatsApp client is authenticated!');
-  io.emit('status', 'CONNECTED');
-});
-
-client.on('auth_failure', () => {
-  console.log('Auth failed!');
-  io.emit('status', 'DISCONNECTED');
-});
-
-client.on('disconnected', (reason) => {
-  console.log('WhatsApp client was disconnected', reason);
-  io.emit('status', 'DISCONNECTED');
-});
-
 // Initialize WhatsApp client
-client.initialize().catch(err => {
-  console.error('Failed to initialize WhatsApp client:', err);
-  io.emit('status', 'DISCONNECTED');
-});
+client.initialize()
+  .then(() => {
+    console.log('WhatsApp client initialized');
+  })
+  .catch((error) => {
+    console.error('Failed to initialize WhatsApp client:', error);
+  });
 
-// Start server
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Start server with port fallback
+const DEFAULT_PORT = 3002;
+const port = typeof process.env.PORT === 'string' ? parseInt(process.env.PORT, 10) : DEFAULT_PORT;
 
-// Error handling
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-});
+server.listen(port)
+  .on('listening', () => {
+    console.log(`Server running on port ${port}`);
+  })
+  .on('error', (error: NodeJS.ErrnoException) => {
+    if (error.code === 'EADDRINUSE') {
+      const nextPort = port + 1;
+      console.log(`Port ${port} is in use, trying ${nextPort}`);
+      server.listen(nextPort);
+    } else {
+      console.error('Server error:', error);
+    }
+  });

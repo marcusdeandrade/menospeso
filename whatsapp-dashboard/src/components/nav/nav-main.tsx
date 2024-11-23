@@ -1,4 +1,8 @@
+"use client"
+
 import { ChevronRight, type LucideIcon } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { cn } from "../../lib/utils";
 import {
   Collapsible,
   CollapsibleContent,
@@ -8,7 +12,6 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -24,6 +27,7 @@ interface NavItem {
   items?: {
     title: string;
     url: string;
+    description?: string;
   }[];
 }
 
@@ -32,48 +36,63 @@ interface NavMainProps {
 }
 
 export function NavMain({ items }: NavMainProps) {
+  const location = useLocation();
+
   return (
-    <div className="space-y-4">
-      <div>
-        <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
-        <SidebarMenu className="mt-1">
-          {items.map((item) => (
-            <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href={item.url} className="flex-1">
-                    <item.icon className="size-4 text-[#A1A1A1]" />
-                    <span className="text-[#A1A1A1]">{item.title}</span>
-                  </a>
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+      <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+      <SidebarMenu>
+        {items.map((item) => (
+          <Collapsible
+            key={item.title}
+            asChild
+            defaultOpen={location.pathname.startsWith(item.url)}
+            className="group/collapsible"
+          >
+            <SidebarMenuItem>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton 
+                  asChild
+                  tooltip={item.title}
+                >
+                  <Link 
+                    to={item.url}
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-lg px-2 text-sm transition-colors",
+                      "text-[#A1A1A1]",
+                      "hover:bg-[#313131] hover:text-white",
+                      "data-[state=open]:bg-[#313131] data-[state=open]:text-white",
+                      location.pathname === item.url && "bg-sidebar-accent text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <item.icon className="size-4" />
+                    <span>{item.title}</span>
+                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                  </Link>
                 </SidebarMenuButton>
-                {item.items?.length ? (
-                  <>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuAction className="data-[state=open]:rotate-90">
-                        <ChevronRight className="size-4" />
-                        <span className="sr-only">Toggle</span>
-                      </SidebarMenuAction>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {item.items?.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton asChild>
-                              <a href={subItem.url} className="flex-1">
-                                <span>{subItem.title}</span>
-                              </a>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </>
-                ) : null}
-              </SidebarMenuItem>
-            </Collapsible>
-          ))}
-        </SidebarMenu>
-      </div>
-    </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarMenuSub>
+                  {item.items?.map((subItem) => (
+                    <SidebarMenuSubItem key={subItem.title}>
+                      <SidebarMenuSubButton 
+                        asChild
+                        className={cn(
+                          location.pathname === subItem.url && "bg-sidebar-accent text-sidebar-accent-foreground"
+                        )}
+                      >
+                        <Link to={subItem.url}>
+                          <span>{subItem.title}</span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  ))}
+                </SidebarMenuSub>
+              </CollapsibleContent>
+            </SidebarMenuItem>
+          </Collapsible>
+        ))}
+      </SidebarMenu>
+    </SidebarGroup>
   );
 }

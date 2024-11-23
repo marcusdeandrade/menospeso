@@ -1,11 +1,16 @@
+"use client"
+
 import { type LucideIcon } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import {
+  SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
+import { cn } from "../../lib/utils";
 
-interface NavSecondaryProps extends React.HTMLAttributes<HTMLDivElement> {
+interface NavSecondaryProps extends React.ComponentPropsWithoutRef<typeof SidebarGroup> {
   items: {
     title: string;
     url: string;
@@ -14,20 +19,28 @@ interface NavSecondaryProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function NavSecondary({ items, className, ...props }: NavSecondaryProps) {
+  const location = useLocation();
+
   return (
-    <div className="mt-auto pt-4 border-t border-[#2A2A2A]" {...props}>
+    <SidebarGroup className={cn("group-data-[collapsible=icon]:hidden", className)} {...props}>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild>
-              <a href={item.url} className="flex-1">
-                <item.icon className="size-4 text-[#666666]" />
-                <span className="text-[#666666]">{item.title}</span>
-              </a>
+            <SidebarMenuButton 
+              asChild 
+              tooltip={item.title}
+              className={cn(
+                location.pathname === item.url && "bg-sidebar-accent text-sidebar-accent-foreground"
+              )}
+            >
+              <Link to={item.url}>
+                <item.icon className="size-4" />
+                <span>{item.title}</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}
       </SidebarMenu>
-    </div>
+    </SidebarGroup>
   );
 }

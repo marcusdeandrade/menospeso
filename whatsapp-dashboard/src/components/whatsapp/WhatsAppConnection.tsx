@@ -1,59 +1,88 @@
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
-import { useWhatsAppStore } from "../../store/whatsappStore";
-import { cn } from "../../lib/utils";
+import { useEffect, useState } from 'react';
+import { io } from 'socket.io-client';
+import { QRCodeSVG } from 'qrcode.react';
+import { useWhatsAppStore } from '../../store/whatsappStore';
+import { Check } from 'lucide-react';
+
+const socket = io('http://localhost:3002');
 
 export function WhatsAppConnection() {
-  const { status, qrCode, connect } = useWhatsAppStore();
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const { setStatus } = useWhatsAppStore();
 
-  const statusMap = {
-    connected: {
-      label: "Conectado",
-      variant: "default" as const,
-    },
-    disconnected: {
-      label: "Desconectado",
-      variant: "destructive" as const,
-    },
-    connecting: {
-      label: "Conectando",
-      variant: "secondary" as const,
-    },
-  };
+  useEffect(() => {
+    // Handle QR code
+    socket.on('qr', (qr: string) => {
+      console.log('Received QR code');
+      setQrCode(qr);
+      setIsConnected(false);
+    });
 
-  const { label, variant } = statusMap[status];
+    // Handle ready state
+    socket.on('ready', () => {
+      console.log('WhatsApp is ready');
+      setQrCode(null);
+      setIsConnected(true);
+      setStatus('connected');
+    });
+
+    // Handle authenticated state
+    socket.on('authenticated', () => {
+      console.log('WhatsApp is authenticated');
+      setQrCode(null);
+      setIsConnected(true);
+      setStatus('connected');
+    });
+
+    // Handle connection state changes
+    socket.on('connection-state', (state: 'connected' | 'disconnected') => {
+      console.log('Connection state:', state);
+      setIsConnected(state === 'connected');
+      setStatus(state);
+      if (state === 'connected') {
+        setQrCode(null);
+      }
+    });
+
+    return () => {
+      socket.off('qr');
+      socket.off('ready');
+      socket.off('authenticated');
+      socket.off('connection-state');
+    };
+  }, [setStatus]);
+
+  if (isConnected) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 space-y-4">
+        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-500/10">
+          <Check className="w-8 h-8 text-green-500" />
+        </div>
+        <p className="text-center text-green-500 font-medium">
+          WhatsApp conectado com sucesso!
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center gap-4 p-4">
-      {status === "disconnected" ? (
-        <>
-          <p className="text-sm text-muted-foreground">
-            Clique em reconectar para estabelecer uma nova conexão com WhatsApp
-          </p>
-          <Button onClick={connect}>Reconectar</Button>
-        </>
-      ) : status === "connecting" ? (
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-sm font-medium">
-            Aponte seu celular para escanear o QR Code.
-          </p>
-          {qrCode ? (
-            <img src={qrCode} alt="QR Code" className="h-48 w-48" />
-          ) : (
-            <div className="h-48 w-48 bg-muted animate-pulse" />
-          )}
-          <p className="text-sm text-muted-foreground">
-            Escaneie o QR code com seu aplicativo WhatsApp
-          </p>
+    <div className="flex flex-col items-center justify-center p-8 space-y-4">
+      <p className="text-center text-muted-foreground mb-4">
+        Para conectar seu WhatsApp, escaneie o código QR abaixo com seu celular
+      </p>
+      {qrCode ? (
+        <div className="p-4 bg-white rounded-lg">
+          <QRCodeSVG value={qrCode} size={256} />
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-2">
-          <Badge variant={variant}>{label}</Badge>
-          <p className="text-sm text-muted-foreground">
-            Você já pode enviar e receber mensagens
-          </p>
+        <div className="flex items-center justify-center w-[256px] h-[256px] bg-muted rounded-lg">
+          <p className="text-muted-foreground">Gerando QR Code...</p>
         </div>
       )}
+      <p className="text-sm text-muted-foreground text-center">
+        Abra o WhatsApp no seu celular, vá em Menu &gt; WhatsApp Web e escaneie o código
+      </p>
     </div>
   );
 }
